@@ -1,0 +1,16 @@
+/* Chrome, Safari, Edge, Opera ke liye */
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox ke liye */
+input[type=number] {
+  -moz-appearance: textfield;
+}
+
+body{
+  display: flex;
+  justify-content: center;
+}

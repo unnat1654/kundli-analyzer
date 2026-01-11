@@ -1,10 +1,13 @@
-from flask import Flask, request, jsonify
-from kundli import generate_kundli, generate_lagna_gochar
+from flask import Flask, request, jsonify, send_file
+from kundli import generate_kundli, generate_lagna_gochar, generate_d1_img
 from utils import create_prompt, validate_input
 from analysis import execute_deep_research
-
+from flask_cors import CORS  # <--- Import this
 
 app = Flask(__name__)
+
+# Allow all origins (Easiest for development)
+CORS(app)
 
 @app.route('/generate-kundli', methods=['POST'])
 def route_generate_kundli():
@@ -15,11 +18,10 @@ def route_generate_kundli():
         return jsonify({"status": "error", "message": error}), 400
 
     try:
-        kundli = generate_kundli(**clean_params)
-        return jsonify({
-            "status": "success",
-            "kundli": kundli
-        })
+        _, kundli_data, asc_rashi = generate_kundli(**clean_params)
+        img_buf = generate_d1_img(kundli_data, asc_rashi)
+
+        return send_file(img_buf, mimetype='image/png')
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
@@ -38,13 +40,13 @@ def route_generate_prompt():
         exc_remedy_categories = clean_params.pop('exc_remedy_categories', None)
         language = clean_params.pop('language', None)
 
-        base_kundli = generate_kundli(**clean_params)
+        kundli_str, _, _ = generate_kundli(**clean_params)
         
         lagna_gochar=generate_lagna_gochar(**clean_params)
 
-        prompt=create_prompt(base_kundli,lagna_gochar, jyotish_schools, inc_remedy_categories,exc_remedy_categories, language)
+        prompt=create_prompt(kundli_str,lagna_gochar, jyotish_schools, inc_remedy_categories,exc_remedy_categories, language)
         
-        return prompt
+        return {"status":"success", "analysis_result":prompt}
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
@@ -63,11 +65,11 @@ def route_generate_analysis():
         exc_remedy_categories = clean_params.pop('exc_remedy_categories', None)
         language = clean_params.pop('language', None)
 
-        base_kundli = generate_kundli(**clean_params)
+        kundli_str, _, _ = generate_kundli(**clean_params)
         
         lagna_gochar=generate_lagna_gochar(**clean_params)
 
-        prompt=create_prompt(base_kundli,lagna_gochar, jyotish_schools, inc_remedy_categories,exc_remedy_categories, language)
+        prompt=create_prompt(kundli_str,lagna_gochar, jyotish_schools, inc_remedy_categories,exc_remedy_categories, language)
         
         result=execute_deep_research(prompt)
 
