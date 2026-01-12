@@ -44,3 +44,11 @@ NAKSHATRA_NAMES: List[str] = [
     "Mula", "Purva Ashadha", "Uttara Ashadha", "Shravana", "Dhanishta",
     "Shatabhisha", "Purva Bhadrapada", "Uttara Bhadrapada", "Revati"
 ]
+
+
+DASHA_ORDER: List[str] = ['Ketu', 'Shukra', 'Surya', 'Chandra', 'Mangal', 'Rahu', 'Guru', 'Shani', 'Budh']
+
+DASHA_YEARS: Dict[str, int] = {
+    'Ketu': 7, 'Shukra': 20, 'Surya': 6, 'Chandra': 10, 'Mangal': 7, 
+    'Rahu': 18, 'Guru': 16, 'Shani': 19, 'Budh': 17
+}

@@ -19,7 +19,7 @@ def ist_to_utc_decimal(year: int, month: int, day: int, ist_hour: int, ist_minut
     
     return year, month, day, decimal_hour
 
-def get_raw_positions(year: int, month: int, day: int, ist_hour: int, ist_minute: int, lat: float, lon: float) -> Tuple[Dict[str, Dict[str, Any]], List[float], List[float]]:
+def get_raw_positions(year: int, month: int, day: int, ist_hour: int, ist_minute: int, lat: float, lon: float, **kwargs) -> Tuple[Dict[str, Dict[str, Any]], List[float], List[float]]:
     swe.set_sid_mode(SIDEREAL_MODE)
     
     u_year, u_month, u_date, u_time = ist_to_utc_decimal(year, month, day, ist_hour, ist_minute)
@@ -80,11 +80,13 @@ def get_navamsa_rashi(longitude: float) -> int:
         
     return (start + navamsa_part) % 12
 
-
+def get_sub_period_duration(lord_years, main_period_years):
+    years = (lord_years * main_period_years) / 120.0
+    return years * 365.2425 
 
 AGENT_NAME = 'deep-research-pro-preview-12-2025'
 
-def create_prompt(base_kundli: str, lagna_gochar: str, jyotish_schools: list[str] = None, inc_remedy_categories: list[str] = None, exc_remedy_categories:list[str]=None, language: str = None):
+def create_prompt(base_kundli: str, dasha_str:str, lagna_gochar: str, jyotish_schools: list[str] = None, inc_remedy_categories: list[str] = None, exc_remedy_categories:list[str]=None, language: str = None):
     if not jyotish_schools:
         jyotish_schools = ["Vedic", "BNN", "KP"]
     
@@ -95,7 +97,6 @@ def create_prompt(base_kundli: str, lagna_gochar: str, jyotish_schools: list[str
     
     inc_line = ""
     if inc_remedy_categories:
-        # Put the \n at the end of the string
         inc_line = f"- Suggest remedies with the help of {', '.join(inc_remedy_categories)}.\n"
 
     exc_line = ""
@@ -103,10 +104,13 @@ def create_prompt(base_kundli: str, lagna_gochar: str, jyotish_schools: list[str
         exc_line = f"- Avoid remedies involving {', '.join(exc_remedy_categories)}.\n"
     prompt=f'''
 CONTEXT:
-This are my kundli(birth chart) details: 
+This is my kundli(birth chart) detail: 
 {base_kundli}
 
-This is my gochar phal(transit chart) details:
+This is my dasha detail:
+{dasha_str}
+
+This is my gochar phal(transit chart) detail:
 {lagna_gochar}
 
 TASK:
@@ -169,8 +173,7 @@ def validate_input(data):
             'exc_remedy_categories': data.get('exc_remedy_categories'),
             'language': data.get('language')
         }
-        
-        # Logical Validation
+
         if not (1 <= clean_data['month'] <= 12): return None, "Month must be 1-12"
         if not (1 <= clean_data['day'] <= 31): return None, "Day must be 1-31"
         if not (0 <= clean_data['ist_hour'] <= 23): return None, "Hours must be 0-23"

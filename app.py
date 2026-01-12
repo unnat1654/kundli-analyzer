@@ -1,12 +1,14 @@
 from flask import Flask, request, jsonify, send_file
-from kundli import generate_kundli, generate_lagna_gochar, generate_d1_img
-from utils import create_prompt, validate_input
+from kundli import generate_kundli, generate_d1_img
+from datetime import datetime
+from dasha import generate_dasha
+from gochar import generate_lagna_gochar, generate_gochar_img
+from utils import create_prompt, validate_input, get_raw_positions, get_rashi
 from analysis import execute_deep_research
-from flask_cors import CORS  # <--- Import this
+from flask_cors import CORS
 
 app = Flask(__name__)
 
-# Allow all origins (Easiest for development)
 CORS(app)
 
 @app.route('/generate-kundli', methods=['POST'])
@@ -18,8 +20,30 @@ def route_generate_kundli():
         return jsonify({"status": "error", "message": error}), 400
 
     try:
-        _, kundli_data, asc_rashi = generate_kundli(**clean_params)
+        positions, _, ascmc=get_raw_positions(**clean_params)
+        asc_rashi = get_rashi(ascmc[0])
+
+        _, kundli_data = generate_kundli(positions, asc_rashi)
         img_buf = generate_d1_img(kundli_data, asc_rashi)
+
+        return send_file(img_buf, mimetype='image/png')
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/generate-gochar', methods=['POST'])
+def route_generate_gochar():
+    data = request.get_json()
+
+    clean_params, error = validate_input(data)
+    if error:
+        return jsonify({"status": "error", "message": error}), 400
+
+    try:
+        _, _, ascmc=get_raw_positions(**clean_params)
+        asc_rashi = get_rashi(ascmc[0])
+
+        _, gochar_data = generate_lagna_gochar(clean_params["lat"],clean_params["lon"], asc_rashi)
+        img_buf = generate_gochar_img(gochar_data, asc_rashi)
 
         return send_file(img_buf, mimetype='image/png')
     except Exception as e:
@@ -40,14 +64,28 @@ def route_generate_prompt():
         exc_remedy_categories = clean_params.pop('exc_remedy_categories', None)
         language = clean_params.pop('language', None)
 
-        kundli_str, _, _ = generate_kundli(**clean_params)
-        
-        lagna_gochar=generate_lagna_gochar(**clean_params)
+        positions, _, ascmc=get_raw_positions(**clean_params)
+        asc_rashi = get_rashi(ascmc[0])
 
-        prompt=create_prompt(kundli_str,lagna_gochar, jyotish_schools, inc_remedy_categories,exc_remedy_categories, language)
+        kundli_str, _ = generate_kundli(positions, asc_rashi)
         
-        return {"status":"success", "analysis_result":prompt}
+        lagna_gochar_str, _ = generate_lagna_gochar(clean_params["lat"], clean_params["lon"], asc_rashi)
+
+        dob = datetime(
+            clean_params['year'],
+            clean_params['month'],
+            clean_params['day'],
+            clean_params['ist_hour'],
+            clean_params['ist_minute']
+        )
+        moon_longitude = positions["Chandra"]["longitude"]
+        dasha_str=generate_dasha(moon_longitude, dob)
+
+        prompt=create_prompt(kundli_str, dasha_str, lagna_gochar_str, jyotish_schools, inc_remedy_categories,exc_remedy_categories, language)
+        
+        return jsonify({"status":"success","prompt":prompt}),200
     except Exception as e:
+        print(e)
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
@@ -65,11 +103,24 @@ def route_generate_analysis():
         exc_remedy_categories = clean_params.pop('exc_remedy_categories', None)
         language = clean_params.pop('language', None)
 
-        kundli_str, _, _ = generate_kundli(**clean_params)
-        
-        lagna_gochar=generate_lagna_gochar(**clean_params)
+        positions, _, ascmc=get_raw_positions(**clean_params)
+        asc_rashi = get_rashi(ascmc[0])
 
-        prompt=create_prompt(kundli_str,lagna_gochar, jyotish_schools, inc_remedy_categories,exc_remedy_categories, language)
+        kundli_str, _ = generate_kundli(positions, asc_rashi)
+        
+        lagna_gochar_str, _ = generate_lagna_gochar(clean_params["lat"], clean_params["lon"], asc_rashi)
+
+        dob = datetime(
+            clean_params['year'],
+            clean_params['month'],
+            clean_params['day'],
+            clean_params['ist_hour'],
+            clean_params['ist_minute']
+        )
+        moon_longitude = positions["Moon"]["longitude"]
+        dasha_str=generate_dasha(moon_longitude, dob)
+
+        prompt=create_prompt(kundli_str, dasha_str, lagna_gochar_str, jyotish_schools, inc_remedy_categories,exc_remedy_categories, language)
         
         result=execute_deep_research(prompt)
 
@@ -79,6 +130,7 @@ def route_generate_analysis():
         if req_status == "completed":
             return jsonify({
                 "status": "success",
+                "dasha": dasha_str,
                 "analysis_result": output_text
             }), 200
 

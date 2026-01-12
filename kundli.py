@@ -1,7 +1,6 @@
-from typing import TypedDict, Dict
-from datetime import datetime
+from typing import TypedDict, Dict, Any
 from utils import (
-    get_raw_positions, get_rashi, get_degree_in_rashi, 
+    get_rashi, get_degree_in_rashi, 
     get_navamsa_rashi, get_house, get_nakshatra, get_pada
 )
 from constants import (
@@ -9,6 +8,7 @@ from constants import (
 )
 import matplotlib.pyplot as plt
 import io
+
 
 
 class PlanetDetails(TypedDict):
@@ -25,25 +25,13 @@ class PlanetDetails(TypedDict):
     neech: bool
 
 def generate_kundli(
-    year: int, 
-    month: int, 
-    day: int, 
-    ist_hour: int, 
-    ist_minute: int, 
-    lat: float, 
-    lon: float,
-    **kwargs
+   positions: Dict[str, Dict[str, Any]], asc_rashi:int
 ) -> tuple[str, dict[str, PlanetDetails], int]:
-    
-    positions, _, ascmc = get_raw_positions(year, month, day, ist_hour, ist_minute, lat, lon)
-    asc_rashi = get_rashi(ascmc[0])
-    
     kundli_data: Dict[str, PlanetDetails] = {}
     report_lines = []
 
     for planet, data in positions.items():
         longitude = data["longitude"]
-        speed = data.get("speed", 0)
         
         curr_rashi = get_rashi(longitude)
         curr_d9 = get_navamsa_rashi(longitude)
@@ -76,65 +64,10 @@ def generate_kundli(
         )
         report_lines.append(block)
 
-    return "\n".join(report_lines), kundli_data, asc_rashi
+    return "\n".join(report_lines), kundli_data
 
 
-
-def generate_lagna_gochar(
-    year: int, month: int, day: int, 
-    ist_hour: int, ist_minute: int, 
-    lat: float, lon: float,
-    **kwargs
-) -> str:
-    """
-    Calculates the positions of current (transit) planets and maps them 
-    to the Houses of the Birth Ascendant (Lagna Gochar).
-    """
-    _, _, ascmc = get_raw_positions(
-        year, month, day, 
-        ist_hour, ist_minute, lat, lon
-    )
-    lagna_long = ascmc[0]
-    lagna_rashi = get_rashi(lagna_long)
-    
-    transit_date = datetime.now()
-        
-    transit_positions, _, _ = get_raw_positions(
-        transit_date.year, transit_date.month, transit_date.day,
-        transit_date.hour, transit_date.minute, lat, lon
-    )
-    
-    report_lines = []
-    report_lines.append(f"=== LAGNA GOCHAR REPORT ===")
-    report_lines.append(f"Birth Lagna (Ascendant): {RASHI_NAMES[lagna_rashi]}\n")
-    
-    for planet, data in transit_positions.items():
-        t_long = data["longitude"]
-
-        t_rashi = get_rashi(t_long)
-        t_degree = get_degree_in_rashi(t_long)
-        t_nakshatra = get_nakshatra(t_long)
-        t_pada = get_pada(t_long)
-
-        gochar_house = get_house(t_rashi, lagna_rashi)
-
-        is_retro = data.get("retrograde", False)
-        is_ucch = t_rashi == UCCH_RASHI.get(planet, -1)
-        is_neech = t_rashi == NEECH_RASHI.get(planet, -1)
-        
-        block = (
-            f"--- {planet} (Transit) ---\n"
-            f"Transit Rashi: {RASHI_NAMES[t_rashi]} ({t_degree:.2f}°)\n"
-            f"Gochar House: {gochar_house} (Relative to Birth Lagna)\n"
-            f"Nakshatra: {NAKSHATRA_NAMES[t_nakshatra]} ({t_pada})\n"
-            f"Status: {'[Retro]' if is_retro else ''} {'[Exalted]' if is_ucch else ''} {'[Debilitated]' if is_neech else ''}\n"
-        )
-        report_lines.append(block)
-        
-    return "\n".join(report_lines)
-
-
-def generate_d1_img(kundli_data, ascendant_sign):
+def generate_d1_img(kundli_data: Dict[str, PlanetDetails], ascendant_sign: int):
     ascendant_sign+=1
     fig, ax = plt.subplots(figsize=(6, 6))
     ax.set_aspect('equal')
