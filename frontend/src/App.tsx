@@ -27,6 +27,8 @@ function App() {
 
   const [kundliImageSrc,setKundliImageSrc]=useState<string | null>(null);
 
+  const [gocharImageSrc,setGocharImageSrc]=useState<string | null>(null);
+
   const [reportContent, setReportContent]=useState<string>("");
 
   const isFormInvalid = !year || !month || !day || !hours || !minutes || !latitude || !longitude || loading;
@@ -65,39 +67,13 @@ function App() {
     setLongitude(location.lng);
   };
 
-  const handleGenerateKundli = async () => {
+  const handleGenerateReport = async () => {
     // Basic Client-side check before sending
     if (!year || !month || !day || !hours || !minutes || !latitude || !longitude) {
       alert("Please fill in all date and time fields.");
       return;
     }
-
-    try {
-      // Replace with your actual endpoint
-      setLoading(true);
-      const {data} = await axios.post('http://localhost:5000/generate-kundli', {
-        year: parseInt(year, 10),
-        month: parseInt(month, 10),
-        day: parseInt(day, 10),
-        hours: parseInt(hours, 10),
-        minutes: parseInt(minutes, 10),
-        latitude: Number(latitude),
-        longitude: Number(longitude)
-      }, {responseType:'blob'});
-
-      const imageUrl = URL.createObjectURL(data);
-      setKundliImageSrc(imageUrl);
-      setLoading(false);
-      alert("Report Request Sent!");
-    } catch (error) {
-      console.error("Error generating report:", error);
-      alert("Failed to generate report.");
-    }
-  };
-
-
-  const handleGenerateReport = async () => {
-    const payload = {
+    const birth_details={
       year: parseInt(year, 10),
       month: parseInt(month, 10),
       day: parseInt(day, 10),
@@ -105,24 +81,27 @@ function App() {
       minutes: parseInt(minutes, 10),
       latitude: Number(latitude),
       longitude: Number(longitude),
+    };
+    
+    const analysis_payload = {
+      ...birth_details,
       jyotish_schools: jyotishSchools.map(opt => opt.value),
       inc_remedy_categories: incRemedyCategories.map(opt => opt.value),
       exc_remedy_categories: excRemedyCategories.map(opt => opt.value),
       language: language
     };
-    
-    // Basic Client-side check before sending
-    if (!year || !month || !day || !hours || !minutes || !latitude || !longitude) {
-      alert("Please fill in all date and time fields.");
-      return;
-    }
 
     try {
-      // Replace with your actual endpoint
       setLoading(true);
-      const {data} = await axios.post('http://localhost:5000/generate-prompt', payload);
-      console.log("Report Generated:", data);
-      setReportContent(data.analysis_result);
+      const kundliResponse = await axios.post('http://localhost:5000/generate-kundli', birth_details, {responseType:'blob'});
+      setKundliImageSrc(URL.createObjectURL(kundliResponse.data));
+
+      const gocharResponse = await axios.post('http://localhost:5000/generate-gochar', birth_details, {responseType:'blob'});
+      setGocharImageSrc(URL.createObjectURL(gocharResponse.data));
+
+      const analysisResponse = await axios.post('http://localhost:5000/generate-prompt', analysis_payload);
+      console.log("Report Generated:", analysisResponse.data);
+      setReportContent(analysisResponse.data.analysis_result);
       setLoading(false);
       alert("Report Request Sent!");
     } catch (error) {
@@ -201,12 +180,16 @@ function App() {
         value={language} 
         onChange={(e) => setLanguage(e.target.value)}
       />
-      <button onClick={handleGenerateKundli} disabled={isFormInvalid}>
-          Generate Kundli
-      </button>
       <button onClick={handleGenerateReport} disabled={isFormInvalid}>
           {loading ? "Generating..." : "Generate Report"}
       </button>
+      {gocharImageSrc && (
+          <img 
+            src={gocharImageSrc} 
+            alt="Gochar Phal" 
+            style={{ maxWidth: '100%', height: 'auto' }} 
+          />
+      )}
       {kundliImageSrc && (
           <img 
             src={kundliImageSrc} 
