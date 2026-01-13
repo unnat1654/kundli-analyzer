@@ -4,6 +4,7 @@ import tailwindcss from '@tailwindcss/vite'
 import path from 'path';
 
 export default defineConfig({
+  base: "/",
   plugins: [
     react({
       babel: {
@@ -16,6 +17,18 @@ export default defineConfig({
     alias: {
       react: path.resolve(__dirname, './node_modules/react'),
       'react-dom': path.resolve(__dirname, './node_modules/react-dom'),
+    },
+  },
+  build: {
+    outDir: path.resolve(__dirname, "../dist"),
+    emptyOutDir: true,
+  },
+  server: {
+    proxy: {
+      "/api": {
+        target: "http://localhost:5000",
+        changeOrigin: true,
+      },
     },
   },
 });

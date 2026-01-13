@@ -36,12 +36,12 @@ const styles = StyleSheet.create({
 });
 
 
-export const PDFCreator = ({ kundliImageSrc, dashaContent, gocharImageSrc,reportContent }: ReportEditorProps) => (
+export const PDFCreator = ({ kundliImageSrc, dashaContent, gocharImageSrc, reportContent }: ReportEditorProps) => (
   <Document>
     <Page size="A4" style={styles.page}>
       <Text style={styles.header}>My Report</Text>
 
-      <View wrap={false}> 
+      <View wrap={false}>
         <Text style={styles.sectionHeading}>Birth Chart</Text>
         {kundliImageSrc && <Image style={styles.image} src={kundliImageSrc} />}
       </View>

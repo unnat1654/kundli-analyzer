@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, send_file
+from flask import Flask, request, jsonify, send_file, send_from_directory
 from kundli import generate_kundli, generate_d1_img
 from datetime import datetime
 from dasha import generate_dasha
@@ -6,12 +6,17 @@ from gochar import generate_lagna_gochar, generate_gochar_img
 from utils import create_prompt, validate_input, get_raw_positions, get_rashi
 from analysis import execute_deep_research
 from flask_cors import CORS
+import os
 
-app = Flask(__name__)
+app = Flask(
+    __name__,
+    static_folder="dist",
+    template_folder="dist"
+)
 
 CORS(app)
 
-@app.route('/generate-kundli', methods=['POST'])
+@app.route('/api/generate-kundli', methods=['POST'])
 def route_generate_kundli():
     data = request.get_json()
 
@@ -28,9 +33,10 @@ def route_generate_kundli():
 
         return send_file(img_buf, mimetype='image/png')
     except Exception as e:
+        print(e)
         return jsonify({"status": "error", "message": str(e)}), 500
 
-@app.route('/generate-gochar', methods=['POST'])
+@app.route('/api/generate-gochar', methods=['POST'])
 def route_generate_gochar():
     data = request.get_json()
 
@@ -47,10 +53,11 @@ def route_generate_gochar():
 
         return send_file(img_buf, mimetype='image/png')
     except Exception as e:
+        print(e)
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
-@app.route('/generate-prompt', methods=['POST'])   
+@app.route('/api/generate-prompt', methods=['POST'])   
 def route_generate_prompt():
     data = request.get_json()
     
@@ -89,7 +96,7 @@ def route_generate_prompt():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
-@app.route('/generate-analysis', methods=['POST'])
+@app.route('/api/generate-analysis', methods=['POST'])
 def route_generate_analysis():
     data = request.get_json()
     
@@ -117,7 +124,7 @@ def route_generate_analysis():
             clean_params['ist_hour'],
             clean_params['ist_minute']
         )
-        moon_longitude = positions["Moon"]["longitude"]
+        moon_longitude = positions["Chandra"]["longitude"]
         dasha_str=generate_dasha(moon_longitude, dob)
 
         prompt=create_prompt(kundli_str, dasha_str, lagna_gochar_str, jyotish_schools, inc_remedy_categories,exc_remedy_categories, language)
@@ -149,7 +156,24 @@ def route_generate_analysis():
                 "message": msg
             }), 500
     except Exception as e:
+        print(e)
         return jsonify({"status": "error", "message": str(e)}), 500
+    
+
+@app.route("/assets/<path:path>")
+def serve_assets(path):
+    return send_from_directory(os.path.join(app.static_folder, "assets"), path)
+
+@app.route("/<path:path>")
+def serve_static(path):
+    full_path = os.path.join(app.static_folder, path)
+    if os.path.exists(full_path):
+        return send_from_directory(app.static_folder, path)
+    return send_from_directory(app.template_folder, "index.html")
+
+@app.route("/")
+def index():
+    return send_from_directory(app.template_folder, "index.html")
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

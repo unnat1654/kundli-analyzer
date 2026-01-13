@@ -8,22 +8,22 @@ export interface Option {
 }
 
 interface CreatableMultiSelectProps {
-  value: readonly Option[]; 
+  value: readonly Option[];
   onChange: (val: readonly Option[]) => void;
   placeholder: string;
   defaultOptions: string[];
 }
 
-export function CreatableMultiSelect({value, onChange, placeholder, defaultOptions }: CreatableMultiSelectProps) {
+export function CreatableMultiSelect({ value, onChange, placeholder, defaultOptions }: CreatableMultiSelectProps) {
   // 2. Explicitly type useState as an array of 'Option'
-  const optionList: Option[] = defaultOptions.map(item => ({ 
-    value: item, 
-    label: item 
+  const optionList: Option[] = defaultOptions.map(item => ({
+    value: item,
+    label: item
   }));
 
   // 3. Typed Change Handler
   const handleChange = (
-    newValue: MultiValue<Option>, 
+    newValue: MultiValue<Option>,
     _actionMeta: ActionMeta<Option>
   ) => {
     // newValue is 'readonly Option[]', which matches our state type now

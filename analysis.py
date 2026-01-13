@@ -30,12 +30,16 @@ def execute_deep_research(prompt:str)->dict[str,str]:
     if reports is not None:
         try:
             cached = reports.find_one({
-                "prompt": prompt, 
-                "report": {"$exists": True, "$ne": ""}
+                "prompt": prompt,
             })
-            if cached:
-                print("\n[Server] Returning cached report from MongoDB.")
+            if cached and cached.get("report"):
                 return {"status": "completed", "output": cached["report"]}
+            if cached:
+                interaction=client.interactions.get(id=cached["interaction_id"])
+                if interaction.status=='completed' and interaction.outputs:
+                    return {"status": "completed", "output": interaction.outputs[-1].text}
+                if interaction.status=='in_progress':
+                    return {"status": "connection_failed", "output": ""}
         except Exception:
             pass
     

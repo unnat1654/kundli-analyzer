@@ -6,18 +6,49 @@ import {
   useMap,
   useMapsLibrary,
   type MapMouseEvent // Import Event type from library
- // Import Event type from library
+  // Import Event type from library
 } from '@vis.gl/react-google-maps';
-import type { LatLng, PlaceAutocompleteProps } from '../Interfaces';
+
+interface PlaceAutocompleteProps {
+  onPlaceSelect: (position: LatLng) => void;
+}
+export interface LatLng {
+  lat: number;
+  lng: number;
+}
+
 
 export default function MapSelector({ onLocationSelect }: {
   onLocationSelect: (location: LatLng) => void;
 }) {
   // 2. Type the State with the Interface
-  const [selectedPosition, setSelectedPosition] = useState<LatLng>({ 
-    lat: 28.6139, 
-    lng: 77.2090 
-  });
+  const [selectedPosition, setSelectedPosition] = useState<LatLng>(() => {
+
+  const lat_str = localStorage.getItem("latitude");
+  const lng_str = localStorage.getItem("longitude");
+  if (lat_str && lng_str) {
+    const parsed_lat = JSON.parse(lat_str) as number;
+    const parsed_lng = JSON.parse(lng_str) as number;
+
+    // Optional safety check
+    if (
+      typeof parsed_lat === 'number' &&
+      typeof parsed_lng === 'number'
+    )
+      return {
+        lat: parsed_lat,
+        lng: parsed_lng
+      } as LatLng;
+    
+  }
+  
+
+  // fallback default (Delhi)
+  return {
+    lat: 28.6139,
+    lng: 77.2090,
+  };
+});
 
   useEffect(() => {
     onLocationSelect(selectedPosition);
@@ -34,7 +65,7 @@ export default function MapSelector({ onLocationSelect }: {
   return (
     <APIProvider apiKey={import.meta.env.VITE_MAPS_API_KEY}>
       <div style={{ height: "500px", width: "100%", position: "relative" }}>
-        
+
         {/* Search Bar Overlay */}
         <div>
           <PlaceAutocomplete onPlaceSelect={setSelectedPosition} />
@@ -59,10 +90,10 @@ export default function MapSelector({ onLocationSelect }: {
 const PlaceAutocomplete = ({ onPlaceSelect }: PlaceAutocompleteProps) => {
   // 4. Type the Autocomplete instance state (It comes from the global google namespace)
   const [placeAutocomplete, setPlaceAutocomplete] = useState<google.maps.places.Autocomplete | null>(null);
-  
+
   // 5. Type the Input Ref for HTML Input Element
   const inputRef = useRef<HTMLInputElement>(null);
-  
+
   const places = useMapsLibrary('places');
   const map = useMap();
 
@@ -81,12 +112,12 @@ const PlaceAutocomplete = ({ onPlaceSelect }: PlaceAutocompleteProps) => {
 
     const listener = placeAutocomplete.addListener('place_changed', () => {
       const place = placeAutocomplete.getPlace();
-      
+
       // Safety check: geometry is optional in types, so we must check it
       if (place.geometry && place.geometry.location) {
         const lat = place.geometry.location.lat();
         const lng = place.geometry.location.lng();
-        
+
         onPlaceSelect({ lat, lng });
 
         if (map) {
@@ -98,7 +129,7 @@ const PlaceAutocomplete = ({ onPlaceSelect }: PlaceAutocompleteProps) => {
 
     // Clean up listener to avoid memory leaks
     return () => {
-        google.maps.event.removeListener(listener);
+      google.maps.event.removeListener(listener);
     };
   }, [onPlaceSelect, placeAutocomplete, map]);
 

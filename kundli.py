@@ -6,6 +6,8 @@ from utils import (
 from constants import (
     UCCH_RASHI, NEECH_RASHI, RASHI_NAMES, NAKSHATRA_NAMES
 )
+import matplotlib
+matplotlib.use("Agg")  # NON-GUI backend
 import matplotlib.pyplot as plt
 import io
 
