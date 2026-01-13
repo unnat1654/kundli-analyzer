@@ -36,17 +36,7 @@ export default function MapSelector({ onLocationSelect }: {
       <div style={{ height: "500px", width: "100%", position: "relative" }}>
         
         {/* Search Bar Overlay */}
-        <div style={{
-          position: "absolute",
-          top: "10px",
-          left: "50%",
-          transform: "translateX(-50%)",
-          zIndex: 10,
-          background: "white",
-          padding: "10px",
-          borderRadius: "8px",
-          boxShadow: "0 2px 6px rgba(0,0,0,0.3)"
-        }}>
+        <div>
           <PlaceAutocomplete onPlaceSelect={setSelectedPosition} />
         </div>
 
@@ -116,7 +106,8 @@ const PlaceAutocomplete = ({ onPlaceSelect }: PlaceAutocompleteProps) => {
     <input
       ref={inputRef}
       placeholder="Search for a location..."
-      style={{ width: "300px", padding: "8px", fontSize: "16px" }}
+      className="absolute top-4 left-4 z-10 w-72 rounded-lg border border-slate-300
+                bg-white/90 px-4 py-2 backdrop-blur focus:ring-2 focus:ring-indigo-500"
     />
   );
 };

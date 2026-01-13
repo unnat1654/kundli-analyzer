@@ -38,6 +38,17 @@ export function CreatableMultiSelect({value, onChange, placeholder, defaultOptio
       value={value}
       onChange={handleChange}
       placeholder={placeholder}
+      className="text-sm"
+      classNamePrefix="select"
+      styles={{
+        control: (base) => ({
+          ...base,
+          borderRadius: "0.5rem",
+          borderColor: "#cbd5e1",
+          boxShadow: "none",
+          padding: "2px",
+        }),
+      }}
     />
   );
 }
