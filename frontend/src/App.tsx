@@ -176,7 +176,7 @@ function App() {
 
       localStorage.setItem("report_generation", "Started");
 
-      const analysisResponse = await axios.post('/api/generate-analysis', analysis_payload);
+      const analysisResponse = await axios.post('/api/generate-prompt', analysis_payload);
       console.log("Report Generated:", analysisResponse.data);
 
       localStorage.setItem("report_generation", "Finished");
@@ -374,7 +374,7 @@ function App() {
         {/* Report */}
         <section className="space-y-6">
           <h2 className="text-lg font-medium text-slate-900 border-l-2 border-indigo-300/60 pl-3">Report</h2>
-          {kundliImageSrc && gocharImageSrc && reportContent && dashaContent && (
+          {kundliImageSrc && gocharImageSrc && (
             <div className="bg-white border border-slate-200 rounded-xl p-6">
               <ReportEditor
                 kundliImageSrc={kundliImageSrc}

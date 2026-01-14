@@ -1,8 +1,9 @@
 from datetime import datetime, timedelta
+from typing import Any, Dict
 from utils import get_sub_period_duration
 from constants import NAKSHATRA_NAMES, DASHA_ORDER, DASHA_YEARS
 
-def generate_dasha(moon_lon:float, birth_date:datetime)->str:
+def generate_dasha(moon_lon:float, birth_date:datetime)->tuple[str, Dict[str, Any]]:
     target_date=datetime.now()
     # --- 1. Calculate Birth Dasha ---
     nakshatra_span = 13 + (1/3) 
@@ -141,7 +142,7 @@ def generate_dasha(moon_lon:float, birth_date:datetime)->str:
         f"   PRATYANTARDASHA (Sub-Sub Period): {pd['lord']}\n"
         f"   > Active from {pd['start'].strftime(fmt)} to {pd['end'].strftime(fmt)}\n"
     )
-    return dasha_str
+    return dasha_str, dasha_data
 
 if __name__ == "__main__":
     moon_longitude = 45.0 

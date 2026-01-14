@@ -1,20 +1,63 @@
+import axios from 'axios';
 import { useState, useEffect } from 'react';
-import { PDFDownloadLink } from '@react-pdf/renderer';
-import { PDFCreator } from './PDFCreator'; // Import component from Step 2
+import toast from 'react-hot-toast';
 
 export interface ReportEditorProps {
   kundliImageSrc: string;
-  dashaContent: string;
+  dashaContent: string | null;
   gocharImageSrc: string;
-  reportContent: string;
+  reportContent: string | null;
 }
+
+const toBase64 = async (input:string) => {
+  
+  const response = await fetch(input);
+  const img_blob = await response.blob();
+
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(img_blob);
+  });
+};
 
 const ReportEditor = ({ kundliImageSrc, dashaContent, gocharImageSrc, reportContent }: ReportEditorProps) => {
   const [editableReport, setEditableReport] = useState<string>("");
 
   useEffect(() => {
-    setEditableReport(reportContent);
+    if (reportContent)
+      setEditableReport(reportContent);
   }, [reportContent]);
+
+  
+
+  const handleDownload =  async ()=>{
+      const [kundliBase64, gocharBase64] = await Promise.all([
+        toBase64(kundliImageSrc),
+        toBase64(gocharImageSrc)
+      ]);
+
+      const payload = {
+        kundli_img: kundliBase64,
+        gochar_img: gocharBase64,
+        dasha_str: dashaContent,
+        report_str: editableReport
+      };
+
+      const {data} = await axios.post('/api/download-pdf', payload, {
+        responseType: 'blob', 
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      if(data.status=="error")
+        toast.error('PDF generation Failed, try again!');
+      else 
+        toast.success(`PDF generated at ${data.destination}`);
+
+    
+  }
   return (
     <div className="grid md:grid-cols-2 gap-8">
       <div className="space-y-6">
@@ -57,22 +100,9 @@ const ReportEditor = ({ kundliImageSrc, dashaContent, gocharImageSrc, reportCont
             onChange={(e) => setEditableReport(e.target.value)}
           />
         </div>
-
-        <PDFDownloadLink
-          document={
-            <PDFCreator
-              kundliImageSrc={kundliImageSrc}
-              gocharImageSrc={gocharImageSrc}
-              dashaContent={dashaContent}
-              reportContent={editableReport}
-            />
-          }
-          fileName="final_report.pdf"
-        >
-          <button className="bg-indigo-900/95 hover:bg-indigo-800/95 text-white px-7 py-2.5 rounded-lg font-medium shadow-sm hover:shadow-md transition-shadow">
-            Download PDF
-          </button>
-        </PDFDownloadLink>
+        <button onClick={handleDownload} className="bg-indigo-900/95 hover:bg-indigo-800/95 text-white px-7 py-2.5 rounded-lg font-medium shadow-sm hover:shadow-md transition-shadow">
+          Download PDF
+        </button>
       </div>
     </div>
   );

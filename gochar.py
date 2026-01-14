@@ -21,14 +21,12 @@ class GocharPlanetDetails(TypedDict):
     neech: bool
 
 def generate_lagna_gochar(
-    lat: float, lon: float, asc_rashi:int
+    lat: float, lon: float, asc_rashi:int, transit_date:datetime
 ) -> tuple[str, Dict[str, GocharPlanetDetails]]:
     """
     Calculates the positions of current (transit) planets and maps them 
     to the Houses of the Birth Ascendant (Lagna Gochar).
     """
-    
-    transit_date = datetime.now()
         
     transit_positions, _, _ = get_raw_positions(
         transit_date.year, transit_date.month, transit_date.day,

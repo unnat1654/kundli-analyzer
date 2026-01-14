@@ -5,3 +5,6 @@ index.ipynb
 **/__pycache__/
 
 dist
+build
+executables
+venv

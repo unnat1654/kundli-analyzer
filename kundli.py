@@ -28,7 +28,7 @@ class PlanetDetails(TypedDict):
 
 def generate_kundli(
    positions: Dict[str, Dict[str, Any]], asc_rashi:int
-) -> tuple[str, dict[str, PlanetDetails], int]:
+) -> tuple[str, dict[str, PlanetDetails]]:
     kundli_data: Dict[str, PlanetDetails] = {}
     report_lines = []
 
