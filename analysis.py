@@ -1,5 +1,7 @@
 import time, os
+from typing import Literal, Optional
 from google import genai
+from pydantic import BaseModel
 import pymongo
 from utils import AGENT_NAME, MAX_DURATION
 from dotenv import load_dotenv
@@ -13,7 +15,7 @@ try:
     mongo_client = pymongo.MongoClient(os.getenv('MONGO_URI'), serverSelectionTimeoutMS=2000)
     reports = mongo_client.get_database().kundli_reports
     
-    reports.create_index("prompt", unique=True)
+    reports.create_index("interaction_id", unique=True)
 except Exception as e:
     print(f"[Warning] MongoDB connection failed: {e}")
 
@@ -156,3 +158,101 @@ def execute_deep_research(prompt:str)->dict[str,str]:
             pass
 
     return {"status": "completed", "output": final_output}
+
+
+def start_deep_research(prompt:str, birth_img:str, gochar_img:str, dasha_str:str)->str|None:
+    try:
+        if reports is None:
+            return None
+        cached = reports.find_one({
+            "prompt": prompt,
+        })
+        if cached and cached.get("report"):
+            return cached['interaction_id']
+        if cached:
+            interaction=client.interactions.get(id=cached["interaction_id"])
+            if interaction.status=='completed' or interaction.status=='in_progress':
+                return interaction.id
+        
+        interaction = client.interactions.create(
+            input=prompt,
+            agent=AGENT_NAME,
+            background=True,
+            agent_config={"type": "deep-research", "thinking_summaries": "none"}
+        )
+        if reports is not None:
+            reports.insert_one({
+                "prompt": prompt,
+                "birth_img":birth_img,
+                "gochar_img":gochar_img,
+                "dasha_str":dasha_str,
+                "interaction_id": interaction.id,
+                "created_at": time.time()
+            })
+        return interaction.id
+    except Exception as e:
+        print(e)
+        return None
+
+class ResearchResult(BaseModel):
+    status: Literal["completed", "in_progress", "failed", "error", "error"]
+    birth_img:Optional[str]=None
+    gochar_img:Optional[str]=None
+    dasha_str:Optional[str]=None
+    output: Optional[str]=None
+
+def get_research_result(interaction_id:str)->ResearchResult:
+    try:
+        if reports is None:
+            return ResearchResult(
+                status="error",
+            )
+
+        cached = reports.find_one({
+            "interaction_id": interaction_id,
+        })
+        if cached is None:
+            return ResearchResult(
+                status="error",
+            )
+         
+        if cached and cached.get("report"):
+            return ResearchResult(
+                status="completed", 
+                birth_img=cached['birth_img'],
+                gochar_img=cached['gochar_img'], 
+                dasha_str=cached['dasha_str'], 
+                output=cached['report']
+            )
+        
+        interaction=client.interactions.get(id=interaction_id)
+
+        if interaction.status=='completed' and interaction.outputs:
+            result=getattr(interaction.outputs[-1], 'text', None)
+            if result:
+                if reports is not None:
+                    reports.update_one(
+                        {"prompt": 'interaction_id'},
+                        {
+                            "$set": {
+                                "report": result,
+                                "updated_at": time.time()
+                            }
+                        },
+                        upsert=True
+                    )
+                return ResearchResult(
+                    status="completed", 
+                    birth_img=cached['birth_img'],
+                    gochar_img=cached['gochar_img'], 
+                    dasha_str=cached['dasha_str'], 
+                    output=result
+                )
+        elif interaction.status=='in_progress':
+            return ResearchResult(status="in_progress")   
+        
+        return ResearchResult(status="failed")
+        
+    except Exception as e:
+        print(e)
+        return ResearchResult(status="error")

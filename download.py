@@ -1,3 +1,4 @@
+import time
 import markdown
 from xhtml2pdf import pisa
 from pathlib import Path
@@ -114,10 +115,18 @@ def generate_jyotish_report(kundli_b64:str, gochar_b64:str, dasha_text:str, repo
     </body>
     </html>
     """
-    dest=Path.home() / "Downloads"
-    pisa_status = pisa.CreatePDF(full_html, dest=dest)
+    
+    downloads = Path.home() / "Downloads"
+    downloads.mkdir(exist_ok=True)
+
+    filename = f"jyotish_report_{int(time.time())}.pdf"
+    pdf_path = downloads / filename
+
+    # Write PDF
+    with open(pdf_path, "wb") as f:
+        pisa_status = pisa.CreatePDF(full_html, dest=f)
 
     if pisa_status.err:
-        return None 
-    
-    return str(dest)
+        return None
+
+    return str(pdf_path)

@@ -1,3 +1,4 @@
+import base64
 import traceback, sys
 from flask import Flask, request, jsonify, send_file, send_from_directory
 from download import generate_jyotish_report
@@ -6,7 +7,7 @@ from datetime import datetime
 from dasha import generate_dasha
 from gochar import generate_lagna_gochar, generate_gochar_img
 from utils import create_prompt, validate_input, get_raw_positions, get_rashi
-from analysis import execute_deep_research
+from analysis import execute_deep_research, get_research_result, start_deep_research
 from flask_cors import CORS
 import os
 
@@ -88,7 +89,7 @@ def route_generate_prompt():
         moon_longitude = positions["Chandra"]["longitude"]
         _, current_dasha_data=generate_dasha(moon_longitude, dob)
         
-        aprox_time=current_dasha_data['current_dasha']['start']
+        aprox_time=current_dasha_data['current_dasha']['pratyantardasha']['start']
 
         lagna_gochar_str, _ = generate_lagna_gochar(clean_params["lat"], clean_params["lon"], asc_rashi, aprox_time)
 
@@ -132,7 +133,7 @@ def route_generate_analysis():
         moon_longitude = positions["Chandra"]["longitude"]
         _, current_dasha_data=generate_dasha(moon_longitude, dob)
         
-        aprox_time=current_dasha_data['current_dasha']['start']
+        aprox_time=current_dasha_data['current_dasha']['pratyantardasha']['start']
 
         lagna_gochar_str, _ = generate_lagna_gochar(clean_params["lat"], clean_params["lon"], asc_rashi, aprox_time)
 
@@ -176,6 +177,82 @@ def route_generate_analysis():
         sys.stderr.write("#######################################\n")
         sys.stderr.flush() # Force it to appear immediately
         return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/api/start_analysis', methods=['POST'])  
+def route_start_analysis():
+    data = request.get_json()
+    
+    clean_params, error = validate_input(data)
+    if error:
+        return jsonify({"status": "error", "message": error}), 400
+
+    try:
+        jyotish_schools = clean_params.pop('jyotish_schools', None)
+        inc_remedy_categories = clean_params.pop('inc_remedy_categories', None)
+        exc_remedy_categories = clean_params.pop('exc_remedy_categories', None)
+        language = clean_params.pop('language', None)
+
+        positions, _, ascmc=get_raw_positions(**clean_params)
+        asc_rashi = get_rashi(ascmc[0])
+
+        kundli_str, kundli_data = generate_kundli(positions, asc_rashi)
+        
+
+        dob = datetime(
+            clean_params['year'],
+            clean_params['month'],
+            clean_params['day'],
+            clean_params['ist_hour'],
+            clean_params['ist_minute']
+        )
+        moon_longitude = positions["Chandra"]["longitude"]
+        _, current_dasha_data=generate_dasha(moon_longitude, dob)
+        
+        aprox_time=current_dasha_data['current_dasha']['pratyantardasha']['start']
+
+        gochar_str, gochar_data = generate_lagna_gochar(clean_params["lat"], clean_params["lon"], asc_rashi, aprox_time)
+
+        dasha_str,_=generate_dasha(moon_longitude, dob)
+
+        gochar_img = generate_gochar_img(gochar_data, asc_rashi)
+        gochar_img.seek(0)
+
+        birth_img = generate_d1_img(kundli_data, asc_rashi)
+        birth_img.seek(0)
+
+        prompt=create_prompt(kundli_str, dasha_str, gochar_str, jyotish_schools, inc_remedy_categories,exc_remedy_categories, language)
+        interaction_id=start_deep_research(
+            prompt, 
+            base64.b64encode(birth_img.read()).decode("utf-8"), 
+            base64.b64encode(gochar_img.read()).decode("utf-8"), 
+            dasha_str
+            )
+
+        if interaction_id is None:
+            return jsonify({"status":"error", "interaction_id":None}), 500
+        else:
+            return jsonify({"status":"success", "interaction_id":interaction_id}), 200
+        
+    except Exception as e:
+        print(traceback.format_exc())
+        print(e)
+        return jsonify({"status":"error", "interaction_id":None}), 500
+
+@app.route('/api/start_analysis/<interaction_id>', methods=['GET'])  
+def route_get_analysis(interaction_id:str):
+
+    result = get_research_result(interaction_id)
+
+    status_code_map = {
+        "completed": 200,
+        "in_progress": 202,
+        "failed": 500,
+        "error": 500,
+    }
+
+    http_status = status_code_map.get(result.status, 500)
+
+    return jsonify(result.model_dump()), http_status
     
 @app.route('/api/download-pdf', methods=['POST'])
 def route_download_pdf():

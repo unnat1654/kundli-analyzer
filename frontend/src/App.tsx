@@ -30,9 +30,9 @@ function App() {
   const [loading, setLoading] = useState<boolean>(false);
   const [showClear, setShowClear] = useState(false);
 
-  const [kundliImageSrc, setKundliImageSrc] = useState<string | null>(null);
+  const [kundliImageSrc, setKundliImageSrc] = useState<string | null>("1");
   const [dashaContent, setDashaContent] = useState<string>("");
-  const [gocharImageSrc, setGocharImageSrc] = useState<string | null>(null);
+  const [gocharImageSrc, setGocharImageSrc] = useState<string | null>("1");
   const [reportContent, setReportContent] = useState<string>("");
 
   const isFormInvalid = !year || !month || !day || !hours || !minutes || !latitude || !longitude || loading;

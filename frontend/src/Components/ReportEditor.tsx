@@ -1,6 +1,8 @@
 import axios from 'axios';
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
+import MDEditor from '@uiw/react-md-editor';
+
 
 export interface ReportEditorProps {
   kundliImageSrc: string;
@@ -46,7 +48,6 @@ const ReportEditor = ({ kundliImageSrc, dashaContent, gocharImageSrc, reportCont
       };
 
       const {data} = await axios.post('/api/download-pdf', payload, {
-        responseType: 'blob', 
         headers: {
           'Content-Type': 'application/json',
         },
@@ -94,10 +95,10 @@ const ReportEditor = ({ kundliImageSrc, dashaContent, gocharImageSrc, reportCont
           <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500 mb-2">
             Analysis (फलित विश्लेषण)
           </h3>
-          <textarea
-            className="w-full h-96 border border-slate-300 rounded-lg p-4 focus:ring-1 focus:ring-indigo-400/30"
+          <MDEditor
             value={editableReport}
-            onChange={(e) => setEditableReport(e.target.value)}
+            preview="edit"
+            onChange={(val) => setEditableReport(val || "")}
           />
         </div>
         <button onClick={handleDownload} className="bg-indigo-900/95 hover:bg-indigo-800/95 text-white px-7 py-2.5 rounded-lg font-medium shadow-sm hover:shadow-md transition-shadow">
