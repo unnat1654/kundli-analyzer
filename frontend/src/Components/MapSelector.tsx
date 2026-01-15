@@ -24,31 +24,31 @@ export default function MapSelector({ onLocationSelect }: {
   // 2. Type the State with the Interface
   const [selectedPosition, setSelectedPosition] = useState<LatLng>(() => {
 
-  const lat_str = localStorage.getItem("latitude");
-  const lng_str = localStorage.getItem("longitude");
-  if (lat_str && lng_str) {
-    const parsed_lat = JSON.parse(lat_str) as number;
-    const parsed_lng = JSON.parse(lng_str) as number;
+    const lat_str = localStorage.getItem("latitude");
+    const lng_str = localStorage.getItem("longitude");
+    if (lat_str && lng_str) {
+      const parsed_lat = JSON.parse(lat_str) as number;
+      const parsed_lng = JSON.parse(lng_str) as number;
 
-    // Optional safety check
-    if (
-      typeof parsed_lat === 'number' &&
-      typeof parsed_lng === 'number'
-    )
-      return {
-        lat: parsed_lat,
-        lng: parsed_lng
-      } as LatLng;
-    
-  }
-  
+      // Optional safety check
+      if (
+        typeof parsed_lat === 'number' &&
+        typeof parsed_lng === 'number'
+      )
+        return {
+          lat: parsed_lat,
+          lng: parsed_lng
+        } as LatLng;
 
-  // fallback default (Delhi)
-  return {
-    lat: 28.6139,
-    lng: 77.2090,
-  };
-});
+    }
+
+
+    // fallback default (Delhi)
+    return {
+      lat: 28.6139,
+      lng: 77.2090,
+    };
+  });
 
   useEffect(() => {
     onLocationSelect(selectedPosition);

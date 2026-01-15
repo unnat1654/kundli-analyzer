@@ -8,6 +8,10 @@ import axios from 'axios';
 import ReportEditor from './Components/ReportEditor.tsx';
 import { useLocalStorage } from './Hooks/useLocalStorage.tsx';
 import toast, { Toaster } from 'react-hot-toast';
+import Lottie from "lottie-react";
+import Loader_gif from "./assets/Progress.json";
+import Failed_gif from "./assets/Failed.json";
+import Error_gif from "./assets/Error.json";
 
 function App() {
   const [day, setDay] = useLocalStorage<string>("day", "");
@@ -27,34 +31,20 @@ function App() {
 
   const [language, setLanguage] = useLocalStorage<string>("language", "");
 
-  const [loading, setLoading] = useState<boolean>(false);
   const [showClear, setShowClear] = useState(false);
 
+  const [reportStatus, setReportStatus] = useState<string>("not_found");
   const [kundliImageSrc, setKundliImageSrc] = useState<string | null>("1");
   const [dashaContent, setDashaContent] = useState<string>("");
   const [gocharImageSrc, setGocharImageSrc] = useState<string | null>("1");
   const [reportContent, setReportContent] = useState<string>("");
 
-  const isFormInvalid = !year || !month || !day || !hours || !minutes || !latitude || !longitude || loading;
+  const [polling, setPolling] = useState<boolean>(true);
+
+  const isFormInvalid = !year || !month || !day || !hours || !minutes || !latitude || !longitude;
   const hasOverlap = incRemedyCategories.some(a =>
     excRemedyCategories.some(b => a.value === b.value)
   );
-
-  useEffect(() => {
-    const jobStatus = localStorage.getItem("report_generation");
-
-    if (jobStatus === "running") {
-      toast("Resuming report generation…", {
-        icon: "🔄",
-      });
-
-      // Prevent double-trigger
-      setLoading(true);
-
-      // Resume generation using stored state
-      handleGenerateReport();
-    }
-  }, []);
 
   const handleNumberInput = (
     value: string,
@@ -125,7 +115,7 @@ function App() {
   };
 
   const handleGenerateReport = async () => {
-    if (loading) {
+    if (polling) {
       toast("Previous session detected. Continuing analysis.", {
         icon: "🧘",
       });
@@ -164,34 +154,68 @@ function App() {
     };
 
     try {
-      setLoading(true);
-      toast("Generating your report…", {
-        icon: "✨",
-      });
-      const kundliResponse = await axios.post('/api/generate-kundli', birth_details, { responseType: 'blob' });
-      setKundliImageSrc(URL.createObjectURL(kundliResponse.data));
+      const { data } = await axios.post('/api/start-analysis', analysis_payload);
 
-      const gocharResponse = await axios.post('/api/generate-gochar', birth_details, { responseType: 'blob' });
-      setGocharImageSrc(URL.createObjectURL(gocharResponse.data));
-
-      localStorage.setItem("report_generation", "Started");
-
-      const analysisResponse = await axios.post('/api/generate-prompt', analysis_payload);
-      console.log("Report Generated:", analysisResponse.data);
-
-      localStorage.setItem("report_generation", "Finished");
-
-      setReportContent(analysisResponse.data.analysis_result);
-      setDashaContent(analysisResponse.data.dasha);
-      setLoading(false);
-      toast.success("Report generated successfully");
+      if (data && data.status == "success") {
+        setPolling(true);
+        toast("Generating your report…", {
+          icon: "✨",
+        });
+        setDashaContent("");
+        setReportContent("");
+        setKundliImageSrc(null);
+        setGocharImageSrc(null);
+      }
     } catch (error) {
-      localStorage.setItem("report_generation", "Finished");
-      setLoading(false);
       console.error("Error generating report:", error);
       toast.error("Failed to generate report");
     }
   };
+
+  let isFetching = false;
+
+  const getReport = async () => {
+    if (isFetching) return;
+    isFetching = true;
+
+    try {
+      const { data } = await axios.get(`/api/get-analysis`);
+
+      if (!data) return;
+
+      if (data.status === "in_progress") {
+        setReportStatus("in_progress");
+        return;
+      }
+
+      setPolling(false);
+
+      if (data.status === "not_found") setReportStatus("not_found");
+      else if (data.status === "failed") setReportStatus("failed");
+      else if (data.status === "error") setReportStatus("error");
+      else if (data.status === "completed") {
+        setReportStatus("completed");
+        setDashaContent(data.dasha_str.trim());
+        setReportContent(data.output);
+        setKundliImageSrc(`data:image/png;base64,${data.birth_img}`);
+        setGocharImageSrc(`data:image/png;base64,${data.gochar_img}`);
+      }
+    } finally {
+      isFetching = false;
+    }
+  };
+
+  useEffect(() => {
+    if (!polling) return;
+    getReport();
+
+    const intervalId = setInterval(() => { getReport(); }, 10_000);
+
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [polling]);
+
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -209,7 +233,7 @@ function App() {
       if (e.key === "Enter") {
         e.preventDefault();
 
-        if (!isFormInvalid && !hasOverlap && !loading) {
+        if (!isFormInvalid && !hasOverlap) {
           handleGenerateReport();
         }
       }
@@ -230,8 +254,7 @@ function App() {
     handleGenerateReport,
     handleClearAll,
     isFormInvalid,
-    hasOverlap,
-    loading,
+    hasOverlap
   ]);
 
 
@@ -349,7 +372,7 @@ function App() {
 
           <div className="pt-6 border-t border-slate-200 flex items-center gap-12">
             <button onClick={handleGenerateReport} disabled={(isFormInvalid || hasOverlap)} className="bg-amber-400 hover:bg-amber-500 text-slate-700 shadow-sm hover:shadow-md disabled:bg-slate-300 px-8 py-3 rounded-xl font-medium transition-all">
-              {loading ? "Generating..." : "Generate Report"}
+              {polling ? "Generation In Progress..." : "Generate Report"}
             </button>
 
             {!showClear ? (
@@ -370,11 +393,53 @@ function App() {
           </div>
 
         </div>
-
         {/* Report */}
         <section className="space-y-6">
-          <h2 className="text-lg font-medium text-slate-900 border-l-2 border-indigo-300/60 pl-3">Report</h2>
-          {kundliImageSrc && gocharImageSrc && (
+          {reportStatus != "not_found" && <h2 className="text-lg font-medium text-slate-900 border-l-2 border-indigo-300/60 pl-3">Report</h2>}
+
+          {reportStatus == "in_progress" && (
+            <>
+              <div className="flex items-baseline gap-3 text-base font-medium text-slate-600 mb-6">
+                <span className="relative inline-flex h-3.5 w-3.5 translate-y-[1.5px]">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                  <span className="relative inline-flex h-3.5 w-3.5 rounded-full bg-indigo-500"></span>
+                </span>
+                <span className="tracking-wide">Current status: In progress</span>
+              </div>
+              <Lottie
+                animationData={Loader_gif}
+                loop={true}
+                style={{ width: "50%", height: "50%" }}
+              />
+            </>
+          )}
+          {reportStatus == "failed" && (
+            <>
+              <div className="flex items-baseline gap-3 text-base font-medium text-rose-600 mb-6">
+                <span className="inline-block h-3.5 w-3.5 rounded-full bg-rose-500 translate-y-[1.5px]"></span>
+                <span className="tracking-wide">Current status: Error</span>
+              </div>
+              <Lottie
+                animationData={Failed_gif}
+                loop={true}
+                style={{ width: "50%", height: "50%" }}
+              />
+            </>
+          )}
+          {reportStatus == "error" && (
+            <>
+              <div className="flex items-center gap-3 text-base font-medium text-rose-600 mb-6">
+                <span className="inline-block h-3.5 w-3.5 rounded-full bg-rose-500"></span>
+                <span className="tracking-wide">Current status: Error</span>
+              </div>
+              <Lottie
+                animationData={Error_gif}
+                loop={true}
+                style={{ width: "50%", height: "50%" }}
+              />
+            </>
+          )}
+          {kundliImageSrc && gocharImageSrc && reportContent && dashaContent && (
             <div className="bg-white border border-slate-200 rounded-xl p-6">
               <ReportEditor
                 kundliImageSrc={kundliImageSrc}

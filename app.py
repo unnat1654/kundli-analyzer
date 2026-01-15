@@ -7,7 +7,7 @@ from datetime import datetime
 from dasha import generate_dasha
 from gochar import generate_lagna_gochar, generate_gochar_img
 from utils import create_prompt, validate_input, get_raw_positions, get_rashi
-from analysis import execute_deep_research, get_research_result, start_deep_research
+from analysis import execute_deep_research, get_research_result, start_deep_research, get_last_report
 from flask_cors import CORS
 import os
 
@@ -178,7 +178,7 @@ def route_generate_analysis():
         sys.stderr.flush() # Force it to appear immediately
         return jsonify({"status": "error", "message": str(e)}), 500
 
-@app.route('/api/start_analysis', methods=['POST'])  
+@app.route('/api/start-analysis', methods=['POST'])  
 def route_start_analysis():
     data = request.get_json()
     
@@ -229,30 +229,25 @@ def route_start_analysis():
             )
 
         if interaction_id is None:
-            return jsonify({"status":"error", "interaction_id":None}), 500
+            return jsonify({"status":"error"}), 500
         else:
-            return jsonify({"status":"success", "interaction_id":interaction_id}), 200
+            return jsonify({"status":"success"}), 200
         
     except Exception as e:
         print(traceback.format_exc())
         print(e)
-        return jsonify({"status":"error", "interaction_id":None}), 500
+        return jsonify({"status":"error"}), 500
 
-@app.route('/api/start_analysis/<interaction_id>', methods=['GET'])  
-def route_get_analysis(interaction_id:str):
 
-    result = get_research_result(interaction_id)
+@app.route('/api/get-analysis', methods=['GET'])
+@app.route('/api/get-analysis/<interaction_id>', methods=['GET'])
+def route_get_analysis(interaction_id: str | None = None):
+    if interaction_id is None:
+        result=get_last_report()
+    else:
+        result = get_research_result(interaction_id)
 
-    status_code_map = {
-        "completed": 200,
-        "in_progress": 202,
-        "failed": 500,
-        "error": 500,
-    }
-
-    http_status = status_code_map.get(result.status, 500)
-
-    return jsonify(result.model_dump()), http_status
+    return jsonify(result.model_dump()), 200
     
 @app.route('/api/download-pdf', methods=['POST'])
 def route_download_pdf():

@@ -45,8 +45,6 @@ def generate_jyotish_report(kundli_b64:str, gochar_b64:str, dasha_text:str, repo
                 padding-bottom: 5px;
                 margin-top: 20px;
             }}
-            
-            /* Table for Side-by-Side Images */
             table.charts {{
                 width: 100%;
                 margin-bottom: 20px;
@@ -68,8 +66,6 @@ def generate_jyotish_report(kundli_b64:str, gochar_b64:str, dasha_text:str, repo
                 font-size: 10pt;
                 color: #555;
             }}
-
-            /* Dasha Section Styling */
             .dasha-box {{
                 background-color: #f9f9f9;
                 border: 1px solid #eee;
@@ -77,11 +73,12 @@ def generate_jyotish_report(kundli_b64:str, gochar_b64:str, dasha_text:str, repo
                 font-family: Courier, monospace; /* Monospace for tabular plain text */
                 font-size: 10pt;
             }}
-            
-            /* Markdown Report Styling */
             .report-content {{
                 line-height: 1.6;
                 text-align: justify;
+            }}
+            .page-break {{
+                page-break-before: always;
             }}
         </style>
     </head>
@@ -107,7 +104,7 @@ def generate_jyotish_report(kundli_b64:str, gochar_b64:str, dasha_text:str, repo
             {dasha_html}
         </div>
 
-        <h2>Detailed Analysis</h2>
+        <h2 class="page-break">Detailed Analysis</h2>
         <div class="report-content">
             {report_html}
         </div>

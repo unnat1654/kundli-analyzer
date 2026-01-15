@@ -11,8 +11,8 @@ export interface ReportEditorProps {
   reportContent: string | null;
 }
 
-const toBase64 = async (input:string) => {
-  
+const toBase64 = async (input: string) => {
+
   const response = await fetch(input);
   const img_blob = await response.blob();
 
@@ -32,32 +32,32 @@ const ReportEditor = ({ kundliImageSrc, dashaContent, gocharImageSrc, reportCont
       setEditableReport(reportContent);
   }, [reportContent]);
 
-  
 
-  const handleDownload =  async ()=>{
-      const [kundliBase64, gocharBase64] = await Promise.all([
-        toBase64(kundliImageSrc),
-        toBase64(gocharImageSrc)
-      ]);
 
-      const payload = {
-        kundli_img: kundliBase64,
-        gochar_img: gocharBase64,
-        dasha_str: dashaContent,
-        report_str: editableReport
-      };
+  const handleDownload = async () => {
+    const [kundliBase64, gocharBase64] = await Promise.all([
+      toBase64(kundliImageSrc),
+      toBase64(gocharImageSrc)
+    ]);
 
-      const {data} = await axios.post('/api/download-pdf', payload, {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      if(data.status=="error")
-        toast.error('PDF generation Failed, try again!');
-      else 
-        toast.success(`PDF generated at ${data.destination}`);
+    const payload = {
+      kundli_img: kundliBase64,
+      gochar_img: gocharBase64,
+      dasha_str: dashaContent,
+      report_str: editableReport
+    };
 
-    
+    const { data } = await axios.post('/api/download-pdf', payload, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    if (data.status == "error")
+      toast.error('PDF generation Failed, try again!');
+    else
+      toast.success(`PDF generated at ${data.destination}`);
+
+
   }
   return (
     <div className="grid md:grid-cols-2 gap-8">
@@ -86,7 +86,7 @@ const ReportEditor = ({ kundliImageSrc, dashaContent, gocharImageSrc, reportCont
           <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500 mb-2">
             Dasha (दशा)
           </h3>
-          <div className="text-sm text-slate-600 leading-relaxed">
+          <div className="text-sm text-slate-600 leading-relaxed whitespace-pre-line">
             {dashaContent}
           </div>
         </div>
