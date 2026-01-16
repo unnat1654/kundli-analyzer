@@ -67,10 +67,9 @@ def generate_jyotish_report(kundli_b64: str, gochar_b64: str, dasha_text: str, r
                 color: #333;
             }}
             h1 {{
-                font-family: 'Times New Roman', serif;
+                font-family: "Constantia", "Palatino Linotype", serif;
                 text-align: center;
                 color: #2c3e50;
-                text-decoration: underline;
                 margin-bottom: 30px;
             }}
             h2 {{

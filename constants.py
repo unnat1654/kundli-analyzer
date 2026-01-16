@@ -17,6 +17,20 @@ PLANET_MAPPING: Dict[str, int] = {
     "Rahu": swe.MEAN_NODE,
 }
 
+PLANET_SHORT_MAP: Dict[str, str] = {
+    "Surya": "Su",
+    "Chandra": "Ch",
+    "Mangal": "Ma",
+    "Budh": "Bu",
+    "Guru": "Gu",
+    "Shukra": "Shu",
+    "Shani": "Sha",
+    "Uranus": "Ur",
+    "Neptune": "Ne",
+    "Pluto": "Pl",
+    "Rahu": "Ra",
+}
+
 UCCH_RASHI: Dict[str, int] = {
     "Surya": 0, "Chandra": 1, "Mangal": 9, "Budh": 7,
     "Guru": 3, "Shukra": 11, "Shani": 6, "Rahu": 1, "Ketu": 7

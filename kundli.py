@@ -4,7 +4,7 @@ from utils import (
     get_navamsa_rashi, get_house, get_nakshatra, get_pada
 )
 from constants import (
-    UCCH_RASHI, NEECH_RASHI, RASHI_NAMES, NAKSHATRA_NAMES
+    PLANET_SHORT_MAP, UCCH_RASHI, NEECH_RASHI, RASHI_NAMES, NAKSHATRA_NAMES
 )
 import matplotlib
 matplotlib.use("Agg")  # NON-GUI backend
@@ -112,7 +112,9 @@ def generate_d1_img(kundli_data: Dict[str, PlanetDetails], ascendant_sign: int):
             except (ValueError, TypeError):
                 deg_str = str(raw_deg)
 
-            label = f"$\mathbf{{{planet}}}^{{{markers}}}_{{{deg_str}^\circ}}$"
+            planet_sf=PLANET_SHORT_MAP[planet]
+
+            label = f"$\mathbf{{{planet_sf}}}^{{{markers}}}_{{{deg_str}^\circ}}$"
             
             house_occupants[h].append(label)
 

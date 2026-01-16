@@ -6,7 +6,7 @@ from utils import (
     get_house, get_nakshatra, get_pada
 )
 from constants import (
-    UCCH_RASHI, NEECH_RASHI, RASHI_NAMES, NAKSHATRA_NAMES
+    PLANET_SHORT_MAP, UCCH_RASHI, NEECH_RASHI, RASHI_NAMES, NAKSHATRA_NAMES
 )
 import matplotlib
 matplotlib.use("Agg")  # NON-GUI backend
@@ -114,8 +114,10 @@ def generate_gochar_img(kundli_data:Dict[str,GocharPlanetDetails], ascendant_sig
                 deg_str = f"{float(raw_deg):.2f}"
             except (ValueError, TypeError):
                 deg_str = str(raw_deg)
+            
+            planet_sf=PLANET_SHORT_MAP[planet]
 
-            label = f"$\mathbf{{{planet}}}^{{{markers}}}_{{{deg_str}^\circ}}$"
+            label = f"$\mathbf{{{planet_sf}}}^{{{markers}}}_{{{deg_str}^\circ}}$"
             
             house_occupants[h].append(label)
 
@@ -132,7 +134,7 @@ def generate_gochar_img(kundli_data:Dict[str,GocharPlanetDetails], ascendant_sig
         if planets:
             label = "\n".join(planets)
             px, py = coords['planet']
-            ax.text(px, py, label, fontsize=9, color='green', 
+            ax.text(px, py, label, fontsize=9, color='saddlebrown', 
                     ha='center', va='center', fontweight='bold')
 
     buf = io.BytesIO()
