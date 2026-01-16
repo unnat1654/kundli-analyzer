@@ -6,8 +6,12 @@ from pydantic import BaseModel
 import pymongo
 from utils import AGENT_NAME
 from dotenv import load_dotenv
+import os, sys
 
-load_dotenv()
+if getattr(sys, 'frozen', False):
+    load_dotenv(os.path.join(sys._MEIPASS, '.env'))
+else:
+    load_dotenv()
 
 client = genai.Client(api_key=os.getenv('GEMINI_API_KEY'))
 

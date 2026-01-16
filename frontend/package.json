@@ -16,6 +16,7 @@
     "@vis.gl/react-google-maps": "^1.7.1",
     "axios": "^1.13.2",
     "html2pdf.js": "^0.13.0",
+    "jyotish-app": "file:",
     "lottie-react": "^2.4.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",

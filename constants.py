@@ -18,6 +18,7 @@ PLANET_MAPPING: Dict[str, int] = {
 }
 
 PLANET_SHORT_MAP: Dict[str, str] = {
+    "Lagna": "La",
     "Surya": "Su",
     "Chandra": "Ch",
     "Mangal": "Ma",
@@ -29,6 +30,7 @@ PLANET_SHORT_MAP: Dict[str, str] = {
     "Neptune": "Ne",
     "Pluto": "Pl",
     "Rahu": "Ra",
+    "Ketu": "Ke"
 }
 
 UCCH_RASHI: Dict[str, int] = {

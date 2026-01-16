@@ -120,19 +120,20 @@ Research across the internet and suggest powerful remedies to balance the negati
 - Cover all aspects of life such as family, friendships, health, finances, spiritual growth, career, faith.
 {inc_line}{exc_line}
 
-OUTPUT FORMAT:
+OUTPUT HEADINGS:
 - My Strengths
 - My Weaknesses
 - Remedies
 - Pros and Cons List
+- Conclusion
 
 STRICT STYLE GUIDELINES:
 - Output ONLY the report.
 - Do not use conversational openers or closers.
 - Do not mention "Since you asked" or "As an AI".
 - Start directly with the first header.
-- Write in easy but professional {language}.
-    '''
+- Write in easy and simple {language}.
+'''
     return prompt
 
 

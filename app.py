@@ -1,6 +1,6 @@
 import base64
 import traceback
-from flask import Flask, request, jsonify, send_file, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory
 from download import generate_jyotish_report
 from kundli import generate_kundli, generate_d1_img
 from datetime import datetime
@@ -36,7 +36,7 @@ def route_start_analysis():
         positions, _, ascmc=get_raw_positions(**clean_params)
         asc_rashi = get_rashi(ascmc[0])
 
-        kundli_str, kundli_data = generate_kundli(positions, asc_rashi)
+        kundli_str, kundli_data = generate_kundli(positions,ascmc[0], asc_rashi)
         
 
         dob = datetime(
@@ -136,7 +136,7 @@ def route_generate_prompt():
         positions, _, ascmc=get_raw_positions(**clean_params)
         asc_rashi = get_rashi(ascmc[0])
 
-        kundli_str, _ = generate_kundli(positions, asc_rashi)
+        kundli_str, _ = generate_kundli(positions,ascmc[0], asc_rashi)
         
         dob = datetime(
             clean_params['year'],

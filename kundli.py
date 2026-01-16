@@ -27,10 +27,32 @@ class PlanetDetails(TypedDict):
     neech: bool
 
 def generate_kundli(
-   positions: Dict[str, Dict[str, Any]], asc_rashi:int
+   positions: Dict[str, Dict[str, Any]], asc_longitude:float, asc_rashi:int
 ) -> tuple[str, dict[str, PlanetDetails]]:
     kundli_data: Dict[str, PlanetDetails] = {}
     report_lines = []
+
+    kundli_data["Lagna"] = {
+        "longitude": asc_longitude,
+        "rashi": asc_rashi,
+        "degree": get_degree_in_rashi(asc_longitude),
+        "D9_rashi": get_navamsa_rashi(asc_longitude),
+        "house": 1,
+        "nakshatra": get_nakshatra(asc_longitude),
+        "pada": get_pada(asc_longitude),
+        "retrograde": False,
+        "vargottam": asc_rashi == get_navamsa_rashi(asc_longitude),
+        "ucch": False,
+        "neech": False
+    }
+
+    report_lines.append(
+        f"--- Lagna ---\n"
+        f"Rashi: {RASHI_NAMES[asc_rashi]}\n"
+        f"Degree: {kundli_data['Lagna']['degree']:.2f}°\n"
+        f"Nakshatra: {NAKSHATRA_NAMES[kundli_data['Lagna']['nakshatra']]}\n"
+        f"Pada: {kundli_data['Lagna']['pada']}\n"
+    )
 
     for planet, data in positions.items():
         longitude = data["longitude"]

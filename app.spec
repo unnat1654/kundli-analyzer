@@ -10,7 +10,7 @@ a = Analysis(
     ['desktop.py'],
     pathex=[],
     binaries=[],
-    datas=[('dist', 'dist'), ('fonts', 'fonts')],  # Your React folder
+    datas=[('dist', 'dist'), ('fonts', 'fonts'), ('.env', '.')],  # Your React folder
     hiddenimports=all_barcode_modules,  # <--- 3. Use the list here
     hookspath=[],
     hooksconfig={},
