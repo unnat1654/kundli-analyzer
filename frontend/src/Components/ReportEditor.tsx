@@ -99,6 +99,7 @@ const ReportEditor = ({ kundliImageSrc, dashaContent, gocharImageSrc, reportCont
             value={editableReport}
             preview="edit"
             onChange={(val) => setEditableReport(val || "")}
+            height={600}
           />
         </div>
         <button onClick={handleDownload} className="bg-indigo-900/95 hover:bg-indigo-800/95 text-white px-7 py-2.5 rounded-lg font-medium shadow-sm hover:shadow-md transition-shadow">

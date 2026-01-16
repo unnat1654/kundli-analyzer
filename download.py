@@ -1,10 +1,19 @@
-import time
-import markdown
-from xhtml2pdf import pisa
+import time, markdown
 from pathlib import Path
-from io import BytesIO
+from playwright.sync_api import sync_playwright
 
-def generate_jyotish_report(kundli_b64:str, gochar_b64:str, dasha_text:str, report_markdown:str):
+def launch_browser(p):
+    for channel in ("msedge", "chrome"):
+        try:
+            return p.chromium.launch(channel=channel)
+        except Exception:
+            pass
+
+    raise RuntimeError(
+        "No supported browser found. Please install Microsoft Edge or Google Chrome."
+    )
+
+def generate_jyotish_report(kundli_b64: str, gochar_b64: str, dasha_text: str, report_markdown: str):
     def format_b64(b64_str):
         if not b64_str.startswith('data:image'):
             return f"data:image/png;base64,{b64_str}"
@@ -13,9 +22,21 @@ def generate_jyotish_report(kundli_b64:str, gochar_b64:str, dasha_text:str, repo
     kundli_src = format_b64(kundli_b64)
     gochar_src = format_b64(gochar_b64)
 
+    # Markdown -> HTML (Hindi content is fine here; the key is the font in CSS)
     report_html = markdown.markdown(report_markdown, extensions=['extra', 'nl2br'])
-
     dasha_html = dasha_text.replace('\n', '<br/>')
+
+    # Fonts are in ./fonts relative to where the code runs
+    fonts_dir = Path.cwd() / "fonts"
+    regular_font = fonts_dir / "NotoSansDevanagari-Regular.ttf"
+    bold_font = fonts_dir / "NotoSansDevanagari-Bold.ttf"
+
+    # Convert local font file paths to file:/// URLs (works on Windows/Mac/Linux)
+    def file_url(p: Path) -> str:
+        return p.resolve().as_uri()
+
+    regular_font_url = file_url(regular_font)
+    bold_font_url = file_url(bold_font)
 
     full_html = f"""
     <!DOCTYPE html>
@@ -23,12 +44,25 @@ def generate_jyotish_report(kundli_b64:str, gochar_b64:str, dasha_text:str, repo
     <head>
         <meta charset="utf-8">
         <style>
+            @font-face {{
+                font-family: 'NotoDev';
+                src: url('{regular_font_url}');
+                font-weight: 400;
+                font-style: normal;
+            }}
+            @font-face {{
+                font-family: 'NotoDev';
+                src: url('{bold_font_url}');
+                font-weight: 700;
+                font-style: normal;
+            }}
+
             @page {{
                 size: A4;
                 margin: 1cm;
             }}
             body {{
-                font-family: Helvetica, sans-serif;
+                font-family: 'NotoDev', Helvetica, sans-serif;
                 font-size: 12pt;
                 color: #333;
             }}
@@ -40,7 +74,7 @@ def generate_jyotish_report(kundli_b64:str, gochar_b64:str, dasha_text:str, repo
                 margin-bottom: 30px;
             }}
             h2 {{
-                color: #e67e22; /* Saffron/Orange tint for Astrological feel */
+                color: #e67e22;
                 border-bottom: 1px solid #ddd;
                 padding-bottom: 5px;
                 margin-top: 20px;
@@ -70,7 +104,7 @@ def generate_jyotish_report(kundli_b64:str, gochar_b64:str, dasha_text:str, repo
                 background-color: #f9f9f9;
                 border: 1px solid #eee;
                 padding: 15px;
-                font-family: Courier, monospace; /* Monospace for tabular plain text */
+                font-family: 'NotoDev', Courier, monospace;
                 font-size: 10pt;
             }}
             .report-content {{
@@ -112,18 +146,19 @@ def generate_jyotish_report(kundli_b64:str, gochar_b64:str, dasha_text:str, repo
     </body>
     </html>
     """
-    
+
     downloads = Path.home() / "Downloads"
     downloads.mkdir(exist_ok=True)
 
     filename = f"jyotish_report_{int(time.time())}.pdf"
     pdf_path = downloads / filename
 
-    # Write PDF
-    with open(pdf_path, "wb") as f:
-        pisa_status = pisa.CreatePDF(full_html, dest=f)
-
-    if pisa_status.err:
-        return None
+    # Render PDF with Playwright
+    with sync_playwright() as p:
+        browser = launch_browser(p)
+        page = browser.new_page()
+        page.set_content(full_html, wait_until="load")
+        page.pdf(path=str(pdf_path), format="A4")
+        browser.close()
 
     return str(pdf_path)

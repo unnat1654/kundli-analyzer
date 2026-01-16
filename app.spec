@@ -10,7 +10,7 @@ a = Analysis(
     ['desktop.py'],
     pathex=[],
     binaries=[],
-    datas=[('dist', 'dist')],  # Your React folder
+    datas=[('dist', 'dist'), ('fonts', 'fonts')],  # Your React folder
     hiddenimports=all_barcode_modules,  # <--- 3. Use the list here
     hookspath=[],
     hooksconfig={},
@@ -30,7 +30,8 @@ exe = EXE(
     a.zipfiles,
     a.datas,
     [],
-    name='KundliAnalyzer',
+    name='Bhaagya Rekha',
+    icon='icon.ico',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,

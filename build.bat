@@ -10,6 +10,7 @@ call venv\Scripts\activate
 echo ================================
 echo Installing Python dependencies
 echo ================================
+venv\Scripts\python -m pip install --upgrade pip
 venv\Scripts\python -m pip install -r requirements.txt|| exit /b
 
 echo ================================

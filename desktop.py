@@ -12,7 +12,7 @@ if __name__ == "__main__":
     t.daemon = True  # <--- CRITICAL: Kills server when app closes
     t.start()
     
-    webview.create_window("Kundli App", "http://127.0.0.1:5000")
+    webview.create_window("Bhaagya Rekha", "http://127.0.0.1:5000")
     webview.start()
     
     # Optional: Force exit Python completely when window closes

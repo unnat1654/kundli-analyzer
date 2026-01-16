@@ -135,8 +135,6 @@ STRICT STYLE GUIDELINES:
     '''
     return prompt
 
-MAX_DURATION = 1200  # Timeout in seconds (e.g., 10 minutes)
-
 
 def validate_input(data):
     required_fields = ['year', 'month', 'day', 'hours', 'minutes', 'latitude', 'longitude']

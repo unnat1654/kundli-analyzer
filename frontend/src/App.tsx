@@ -265,11 +265,11 @@ function App() {
 
         {/* Header */}
         <header className="space-y-2">
-          <h1 className="text-4xl font-semibold tracking-tight text-slate-900">
-            Astro Report Studio
+          <h1 className="text-5xl font-semibold tracking-tight text-slate-900 mb-5">
+            भाग्य रेखा
           </h1>
-          <p className="text-slate-500 max-w-xl">
-            Generate, refine and export beautifully structured astrological reports.
+          <p className="text-xl text-slate-500 max-w-xl pl-2">
+            सटीक ज्योतिष विश्लेषण, सुव्यवस्थित रिपोर्ट और प्रभावी उपाय।
           </p>
         </header>
 
