@@ -5,7 +5,7 @@ from app import app
 
 def start_flask():
     # use_reloader=False prevents Flask from spawning a second process
-    app.run(port=5000, debug=False, use_reloader=False)
+    app.run(host="0.0.0.0", port=5000, debug=False, use_reloader=False)
 
 if __name__ == "__main__":
     t = threading.Thread(target=start_flask)
