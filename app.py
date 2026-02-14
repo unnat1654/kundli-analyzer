@@ -32,6 +32,7 @@ def route_start_analysis():
         inc_remedy_categories = clean_params.pop('inc_remedy_categories', None)
         exc_remedy_categories = clean_params.pop('exc_remedy_categories', None)
         language = clean_params.pop('language', None)
+        gender = clean_params.pop('gender', "NOT KNOWN")
 
         positions, _, ascmc=get_raw_positions(**clean_params)
         asc_rashi = get_rashi(ascmc[0])
@@ -61,7 +62,10 @@ def route_start_analysis():
         birth_img = generate_d1_img(kundli_data, asc_rashi)
         birth_img.seek(0)
 
-        prompt=create_prompt(kundli_str, dasha_str, gochar_str, jyotish_schools, inc_remedy_categories,exc_remedy_categories, language)
+        prompt=create_prompt(kundli_str, dasha_str, gochar_str, jyotish_schools, inc_remedy_categories, exc_remedy_categories, language, gender)
+
+        print(prompt)
+        
         interaction_id=start_deep_research(
             prompt, 
             base64.b64encode(birth_img.read()).decode("utf-8"), 
@@ -132,6 +136,7 @@ def route_generate_prompt():
         inc_remedy_categories = clean_params.pop('inc_remedy_categories', None)
         exc_remedy_categories = clean_params.pop('exc_remedy_categories', None)
         language = clean_params.pop('language', None)
+        gender = clean_params.pop('gender', "NOT KNOWN")
 
         positions, _, ascmc=get_raw_positions(**clean_params)
         asc_rashi = get_rashi(ascmc[0])
@@ -150,11 +155,11 @@ def route_generate_prompt():
         
         aprox_time=current_dasha_data['current_dasha']['pratyantardasha']['start']
 
-        lagna_gochar_str, _ = generate_lagna_gochar(clean_params["lat"], clean_params["lon"], asc_rashi, aprox_time)
+        gochar_str, _ = generate_lagna_gochar(clean_params["lat"], clean_params["lon"], asc_rashi, aprox_time)
 
         dasha_str,_=generate_dasha(moon_longitude, dob)
 
-        prompt=create_prompt(kundli_str, dasha_str, lagna_gochar_str, jyotish_schools, inc_remedy_categories,exc_remedy_categories, language)
+        prompt=create_prompt(kundli_str, dasha_str, gochar_str, jyotish_schools, inc_remedy_categories,exc_remedy_categories, language, gender)
         
         return jsonify({"status":"success","dasha": dasha_str, "analysis_result": prompt}),200
     except Exception as e:

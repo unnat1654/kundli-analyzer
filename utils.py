@@ -1,6 +1,6 @@
 import swisseph as swe
 from typing import Tuple, Dict, Any, List
-from constants import MOVABLE_SIGNS, FIXED_SIGNS, SIDEREAL_MODE, PLANET_MAPPING
+from constants import COMBUST_LIMITS, MOVABLE_SIGNS, FIXED_SIGNS, NATURAL_ENEMIES, NATURAL_FRIENDS, RASHI_LORD, SIDEREAL_MODE, PLANET_MAPPING, TEMP_FRIEND_HOUSES
 
 def normalize_angle(angle: float) -> float:
     return angle % 360
@@ -86,12 +86,9 @@ def get_sub_period_duration(lord_years, main_period_years):
 
 AGENT_NAME = 'deep-research-pro-preview-12-2025'
 
-def create_prompt(base_kundli: str, dasha_str:str, lagna_gochar: str, jyotish_schools: list[str] = None, inc_remedy_categories: list[str] = None, exc_remedy_categories:list[str]=None, language: str = None):
+def create_prompt(base_kundli: str, dasha_str:str, lagna_gochar: str, jyotish_schools: list[str] = None, inc_remedy_categories: list[str] = None, exc_remedy_categories:list[str]=None, language: str = "english", gender: str= "NOT KNOWN"):
     if not jyotish_schools:
         jyotish_schools = ["Vedic", "BNN", "KP"]
-    
-    if not language:
-        language="english"
 
     schools_str = ", ".join(jyotish_schools)
     
@@ -102,6 +99,10 @@ def create_prompt(base_kundli: str, dasha_str:str, lagna_gochar: str, jyotish_sc
     exc_line = ""
     if exc_remedy_categories:
         exc_line = f"- Avoid remedies involving {', '.join(exc_remedy_categories)}.\n"
+
+    gender_line= ""
+    if gender != "NOT KNOWN":
+        gender_line = f"The gender is {gender.lower()}.\n"
     prompt=f'''
 CONTEXT:
 This is my kundli(birth chart) detail: 
@@ -112,7 +113,7 @@ This is my dasha detail:
 
 This is my gochar phal(transit chart) detail:
 {lagna_gochar}
-
+{gender_line}
 TASK:
 Research across the internet and suggest powerful remedies to balance the negatives of my kundali. 
 - Consult important books, websites, and social apps.
@@ -146,6 +147,9 @@ def validate_input(data):
     for field in required_fields:
         if field not in data:
             return None, f"Missing required field: {field}"
+    
+    if 'gender' in data and not (data['gender']=="MALE" or data['gender']=="FEMALE" or data['gender']=="NOT KNOWN"):
+        return None, "'gender' must be a MALE, FEMALE or NOT KNOWN."
         
     if 'jyotish_schools' in data and not isinstance(data['jyotish_schools'], list):
         return None, "'jyotish_schools' must be a list of strings."
@@ -167,6 +171,7 @@ def validate_input(data):
             'ist_minute': int(data['minutes']),
             'lat': float(data['latitude']),
             'lon': float(data['longitude']),
+            'gender': data.get('gender') or "NOT KNOWN",
             'jyotish_schools': data.get('jyotish_schools'), 
             'inc_remedy_categories': data.get('inc_remedy_categories'),
             'exc_remedy_categories': data.get('exc_remedy_categories'),
@@ -182,3 +187,109 @@ def validate_input(data):
 
     except ValueError:
         return None, "Invalid data types. Ensure dates/times are integers and lat/lon are floats."
+
+
+def natural_relation(planet: str, other: str) -> str:
+    if other in NATURAL_FRIENDS.get(planet, []):
+        return "friend"
+    elif other in NATURAL_ENEMIES.get(planet, []):
+        return "enemy"
+    else:
+        return "neutral"
+    
+def house_distance(h1, h2):
+    d = (h2 - h1) % 12
+    return 12 if d == 0 else d
+
+def temporary_relation(planet_house, sign_lord_house):
+    dist = house_distance(planet_house, sign_lord_house)
+    if dist in TEMP_FRIEND_HOUSES:
+        return "friend"
+    else:
+        return "enemy"
+    
+def composite_relation(natural, temporary):
+    if natural == "friend" and temporary == "friend":
+        return "great_friend"
+    if natural == "friend" and temporary == "enemy":
+        return "friend"
+    if natural == "neutral" and temporary == "friend":
+        return "friend"
+    if natural == "neutral" and temporary == "enemy":
+        return "enemy"
+    if natural == "enemy" and temporary == "friend":
+        return "enemy"
+    if natural == "enemy" and temporary == "enemy":
+        return "great_enemy"
+    return "neutral"
+
+def houses_owned(planet, asc_rashi):
+    owned = []
+    for rashi, lord in RASHI_LORD.items():
+        if lord == planet:
+            house = (rashi - asc_rashi) % 12 + 1
+            owned.append(house)
+    return owned
+
+def functional_nature(planet, asc_rashi):
+    owned = houses_owned(planet, asc_rashi)
+
+    if 1 in owned:
+        return "benefic"
+
+    trikona = any(h in {5, 9} for h in owned)
+    kendra = any(h in {4, 7, 10} for h in owned)
+    dusthana = any(h in {6, 8, 12} for h in owned)
+
+    if trikona and kendra:
+        return "yogakaraka"
+    if dusthana:
+        return "malefic"
+    if trikona:
+        return "benefic"
+    if kendra:
+        return "neutral"
+    
+    return "neutral"
+
+def is_combust(planet, planet_lon, sun_lon):
+    if planet not in COMBUST_LIMITS:
+        return False
+
+    diff = abs(planet_lon - sun_lon) % 360
+    distance = min(diff, 360 - diff)
+    return distance <= COMBUST_LIMITS[planet]
+
+
+
+#for v2: put this in kundli
+# lagna_aspected_by = []
+
+# for planet, details in kundli_data.items():
+#     if planet == "Lagna":
+#         continue
+
+#     planet_house = details["house"]
+#     lagna_house = 1
+
+#     distance = (lagna_house - planet_house) % 12
+#     if distance == 0:
+#         distance = 12
+
+#     if distance in ASPECTS.get(planet, []):
+#         lagna_aspected_by.append(planet)
+# moon_aspected_by = []
+
+# for planet, details in kundli_data.items():
+#     if planet in ("Lagna", "Moon"):
+#         continue
+
+#     planet_house = details["house"]
+
+#     distance = (moon_house - planet_house) % 12
+#     if distance == 0:
+#         distance = 12
+
+#     if distance in ASPECTS.get(planet, []):
+#         moon_aspected_by.append(planet)
+

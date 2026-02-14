@@ -68,3 +68,64 @@ DASHA_YEARS: Dict[str, int] = {
     'Ketu': 7, 'Shukra': 20, 'Surya': 6, 'Chandra': 10, 'Mangal': 7, 
     'Rahu': 18, 'Guru': 16, 'Shani': 19, 'Budh': 17
 }
+
+# FOR V2
+RASHI_LORD = {
+    1: "Mars",      # Aries
+    2: "Venus",     # Taurus
+    3: "Mercury",   # Gemini
+    4: "Moon",      # Cancer
+    5: "Sun",       # Leo
+    6: "Mercury",   # Virgo
+    7: "Venus",     # Libra
+    8: "Mars",      # Scorpio
+    9: "Jupiter",   # Sagittarius
+    10: "Saturn",   # Capricorn
+    11: "Saturn",   # Aquarius
+    12: "Jupiter"   # Pisces
+}
+
+
+NATURAL_FRIENDS = {
+    "Surya":   ["Chandra", "Mangal", "Guru"],
+    "Chandra": ["Surya", "Budh"],
+    "Mangal":  ["Surya", "Chandra", "Guru"],
+    "Budh":    ["Surya", "Shukra"],
+    "Guru":    ["Surya", "Chandra", "Mangal"],
+    "Shukra":  ["Budh", "Shani"],
+    "Shani":   ["Budh", "Shukra"],
+    "Rahu":    ["Shani", "Shukra"]
+}
+NATURAL_ENEMIES = {
+    "Surya":   ["Shukra", "Shani"],
+    "Chandra": [],
+    "Mangal":  ["Budh"],
+    "Budh":    ["Chandra"],
+    "Guru":    ["Shukra", "Budh"],
+    "Shukra":  ["Surya", "Chandra"],
+    "Shani":   ["Surya", "Chandra"],
+    "Rahu":    ["Surya", "Chandra"]
+}
+
+TEMP_FRIEND_HOUSES = {2, 3, 4, 10, 11, 12}
+
+COMBUST_LIMITS = {
+    "Chandra": 12,
+    "Mangal": 17,
+    "Budh":   14,
+    "Guru":   11,
+    "Shukra": 10,
+    "Shani":  15
+}
+
+ASPECTS = {
+    "Surya": [7],
+    "Chandra": [7],
+    "Budh": [7],
+    "Shukra": [7],
+    "Mangal": [4, 7, 8],
+    "Guru": [5, 7, 9],
+    "Shani": [3, 7, 10],
+    "Rahu": [5, 7, 9],
+    "Ketu": [5, 7, 9],
+}

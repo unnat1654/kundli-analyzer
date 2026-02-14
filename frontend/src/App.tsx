@@ -31,6 +31,8 @@ function App() {
 
   const [language, setLanguage] = useLocalStorage<string>("language", "");
 
+  const [gender, setGender] = useLocalStorage<string>("gender", "NOT KNOWN");
+
   const [showClear, setShowClear] = useState(false);
 
   const [reportStatus, setReportStatus] = useState<string>("not_found");
@@ -81,6 +83,7 @@ function App() {
     setExcRemedyCategories([]);
     setJyotishSchools([]);
     setLanguage("");
+    setGender("NOT KNOWN");
 
     // Generated content
     setKundliImageSrc(null);
@@ -89,7 +92,7 @@ function App() {
     setDashaContent("");
 
     setShowClear(false);
-    ["day", "month", "year", "hours", "minutes", "latitude", "longitude", "incRemedyCategories", "excRemedyCategories", "jyotishSchools", "language",].forEach(key => localStorage.removeItem(key));
+    ["day", "month", "year", "hours", "minutes", "latitude", "longitude", "incRemedyCategories", "excRemedyCategories", "jyotishSchools", "language", "gender",].forEach(key => localStorage.removeItem(key));
 
     toast.success("Form cleared. Ready for a new report.", {
       icon: "🌱",
@@ -135,7 +138,7 @@ function App() {
       return;
     }
 
-    const birth_details = {
+    const analysis_payload = {
       year: parseInt(year, 10),
       month: parseInt(month, 10),
       day: parseInt(day, 10),
@@ -143,14 +146,11 @@ function App() {
       minutes: parseInt(minutes, 10),
       latitude: Number(latitude),
       longitude: Number(longitude),
-    };
-
-    const analysis_payload = {
-      ...birth_details,
       jyotish_schools: jyotishSchools.map(opt => opt.value),
       inc_remedy_categories: incRemedyCategories.map(opt => opt.value),
       exc_remedy_categories: excRemedyCategories.map(opt => opt.value),
-      language: language
+      language: language,
+      gender: gender
     };
 
     try {
@@ -360,14 +360,32 @@ function App() {
           </section>
 
           {/* Language */}
-          <section className="max-w-sm">
-            <label className="text-xs tracking-wide uppercase text-slate-400 pl-[2px]">Specify Language</label>
-            <input
-              value={language}
-              onChange={(e) => setLanguage(e.target.value)}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2  hover:border-indigo-300 focus:outline-none focus:ring-1 focus:ring-indigo-400/30 focus:border-indigo-400"
-              placeholder="English, Hindi..."
-            />
+          <section className="grid md:grid-cols-3 gap-6">
+            <div>
+              <label className="text-xs tracking-wide uppercase text-slate-400 pl-[2px]">Specify Language</label>
+              <input
+                value={language}
+                onChange={(e) => setLanguage(e.target.value)}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm hover:border-indigo-300 focus:outline-none focus:ring-1 focus:ring-indigo-400/30 focus:border-indigo-400"
+                placeholder="English, Hindi..."
+              />
+            </div>
+
+            <div>
+              <label className="text-xs tracking-wide uppercase text-slate-400 pl-[2px]">
+                Specify Gender
+              </label>
+              <select
+                value={gender}
+                onChange={(e) => setGender(e.target.value)}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm hover:border-indigo-300 focus:outline-none focus:ring-1 focus:ring-indigo-400/30 focus:border-indigo-400 bg-white"
+              >
+                <option value="NOT KNOWN">NOT KNOWN</option>
+                <option value="MALE">MALE</option>
+                <option value="FEMALE">FEMALE</option>
+              </select>
+            </div>
+
           </section>
 
           <div className="pt-6 border-t border-slate-200 flex items-center gap-12">
